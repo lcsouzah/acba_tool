@@ -48,6 +48,14 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
     super.initState();
     _loadHistory();
   }
+  @override
+  void dispose() {
+    _avgPriceController.dispose();
+    _tokenQtyController.dispose();
+    _tokenPriceController.dispose();
+    _targetAvgController.dispose();
+    super.dispose();
+  }
 
   Future<void> _exportCsv() async {
     if (_history.isEmpty) {
