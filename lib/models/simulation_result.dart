@@ -43,7 +43,7 @@ class SimulationResult {
 
       // 🔒 If loading old entries, default to false/null
       committed: (json['committed'] as bool?) ?? false,
-      committedAt: (json['commitedAt'] != null)
+      committedAt: (json['committedAt'] != null)
         ? DateTime.parse(json['committedAt'] as String)
           : null,
     );
