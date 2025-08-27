@@ -3,9 +3,13 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/simulation_result.dart';
 import 'dart:convert';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 
 class AcbaHomeScreen extends StatefulWidget {
+
   const AcbaHomeScreen({super.key});
 
 
@@ -14,6 +18,17 @@ class AcbaHomeScreen extends StatefulWidget {
 }
 
 class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
+
+  String _formatWhen(DateTime t) {
+    // e.g., "Aug 8 · 18:42"
+    return DateFormat('MMM d · HH:mm').format(t);
+  }
+
+  bool get _isAllowed => _resultColor == Colors.green.shade100;
+
+  IconData get _statusIcon => _isAllowed ? Icons.check_circle : Icons.error;
+  Color get _statusColor => _isAllowed ? Colors.green.shade600 : Colors.red.shade700;
+  String get _statusText => _isAllowed ? 'Allowed (AP will decrease)' : 'Not Allowed';
 
   final _avgPriceController = TextEditingController();
   final _tokenQtyController = TextEditingController();
@@ -32,6 +47,61 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
   void initState() {
     super.initState();
     _loadHistory();
+  }
+
+  Future<void> _exportCsv() async {
+    if (_history.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No history to export')),
+        );
+      }
+      return;
+    }
+
+    // Build CSV
+    final buffer = StringBuffer();
+    buffer.writeln('timestamp,old_ap,new_ap,qty_to_buy,cost');
+    for (final r in _history) {
+      buffer.writeln([
+        r.timestamp.toIso8601String(),
+        r.oldAp.toStringAsFixed(6),
+        r.newAp.toStringAsFixed(6),
+        r.qtyToBuy.toStringAsFixed(6),
+        r.cost.toStringAsFixed(6),
+      ].join(','));
+    }
+
+    // Save to temp file
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/acba_history.csv');
+    await file.writeAsString(buffer.toString());
+
+    // Share
+    await Share.shareXFiles(
+      [XFile(file.path)],
+      text: 'ACBA Tool – Simulation History (CSV)',
+      subject: 'ACBA Simulation History',
+    );
+  }
+
+
+  Future<void> _saveHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = _history.map((e) => jsonEncode(e.toJson())).toList();
+    await prefs.setStringList('history', saved);
+  }
+
+  void _resetInputs(){
+    _avgPriceController.clear();
+    _tokenQtyController.clear();
+    _tokenPriceController.clear();
+    _targetAvgController.clear();
+
+    setState(() {
+      _resultText = null;
+      _resultColor = Colors.transparent;
+    });
   }
 
   void _loadHistory() async {
@@ -103,9 +173,15 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
       _history.insert(0, simulationResult);
     });
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final saved = _history.map((e) => jsonEncode(e.toJson())).toList();
-    await prefs.setStringList('history', saved);
+  await _saveHistory();
+
+    if (mounted && _isAllowed){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Simulation saved'),
+        ),
+      );
+    }
 
     setState(() {
       _resultText =
@@ -123,50 +199,141 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('ACBA Tool')),
+      appBar: AppBar(
+          title: const Text('ACBA Tool'),
+        actions: [
+          IconButton(
+          tooltip: 'Export CSV',
+          icon: const Icon(Icons.ios_share),
+          onPressed: _exportCsv,
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            TextField( // Average Price
-              controller: _avgPriceController,
-              decoration: const InputDecoration(labelText: 'Current Average Price'),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            Text(
+              'Discipline Calculator',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.blue.shade800,
+              ),
             ),
-            TextField(  // Token Qty
-              controller: _tokenQtyController,
-              decoration: const InputDecoration(labelText: 'Current Token Quantity'),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            ),
-            TextField( // Token Price
-              controller: _tokenPriceController,
-              decoration: const InputDecoration(labelText: 'Current Token Price'),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            ),
-            TextField( //🆕 Target Avg
-              controller: _targetAvgController,
-              decoration: const InputDecoration(labelText: 'Target Average Price'),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _calculate,
-              child: const Text('Calculate'),
-            ),
-            const SizedBox(height: 20),
-            if (_resultText != null)
-              Container(
-                padding: const EdgeInsets.all(16),
-                width: double.infinity,
-                color: _resultColor,
-                child: Text(
-                  _resultText!,
-                  style: const TextStyle(fontSize: 16),
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _avgPriceController,
+                      decoration: const InputDecoration(
+                        labelText: 'Current Average Price',
+                        prefixIcon: Icon(Icons.trending_down),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _tokenQtyController,
+                      decoration: const InputDecoration(
+                        labelText: 'Current Token Quantity',
+                        prefixIcon: Icon(Icons.numbers),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _tokenPriceController,
+                      decoration: const InputDecoration(
+                        labelText: 'Current Token Price',
+                        prefixIcon: Icon(Icons.attach_money),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _targetAvgController,
+                      decoration: const InputDecoration(
+                        labelText: 'Target Average Price',
+                        prefixIcon: Icon(Icons.flag),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    ),
+                  ],
                 ),
               ),
-            const Divider(height: 40),
-            const Text('History', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _calculate,
+                    icon: const Icon(Icons.calculate),
+                    label: const Text('Calculate'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _resetInputs,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Reset'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            if (_resultText != null)
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Banner
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _isAllowed ? Colors.green.shade50 : Colors.red.shade50,
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(_statusIcon, color: _statusColor),
+                          const SizedBox(width: 8),
+                          Text(
+                            _statusText,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: _statusColor,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Details
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                      child: Text(
+                        _resultText!,
+                        style: const TextStyle(fontSize: 15, height: 1.35),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
             // Clear History Button
 
@@ -174,35 +341,131 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
               alignment: Alignment.centerRight,
               child: TextButton.icon(
                 onPressed: _history.isEmpty ? null :_clearHistory,
-                icon: const Icon(Icons.delete),
+                icon: const Icon(Icons.delete_forever),
                 label: const Text('Clear History'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red.shade100,
+                  foregroundColor: Colors.red.shade900,
+                  ),
               ),
+
             ),
 
             // ✅ Fix: Wrap history section in Expanded
             Expanded(
               child: _history.isEmpty
-                  ? const Center(child: Text("No history yet."))
-                  : ListView.builder(
+                  ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.history, size: 48, color: Colors.grey),
+                  SizedBox(height: 12),
+                  Text("No history yet.",
+                      style: TextStyle(color: Colors.grey, fontSize: 16)),
+                ],
+              )
+                  : ListView.separated(
                 itemCount: _history.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (context, index) {
                   final sim = _history[index];
-                  return Card(
+                  final wasImprovement = sim.newAp < sim.oldAp;
+
+                  return Dismissible(
+                    key: ValueKey(sim.timestamp.toIso8601String()), // unique key
+                    background: Container(
+                      color: Colors.red.shade100,
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Icon(Icons.delete, color: Colors.red.shade700),
+                    ),
+                    secondaryBackground: Container(
+                      color: Colors.red.shade100,
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Icon(Icons.delete, color: Colors.red.shade700),
+                    ),
+                    onDismissed: (direction) async {
+                      // Capture before removing
+                      final removed = sim;
+                      final removedIndex = index;
+
+                      // Remove from list + persist
+                      setState(() {
+                        _history.removeAt(removedIndex);
+                      });
+                      await _saveHistory();
+
+                      if (!mounted) return;
+
+                      // Show snackbar with Undo
+                      ScaffoldMessenger.of(context)
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
+                          SnackBar(
+                            content: const Text('Entry removed'),
+                            action: SnackBarAction(
+                              label: 'Undo',
+                              onPressed: () async {
+                                // Restore item at the same position + persist
+                                setState(() {
+                                  _history.insert(removedIndex, removed);
+                                });
+                                await _saveHistory();
+                              },
+                            ),
+                          ),
+                        );
+                    },
                     child: ListTile(
-                      title: Text(
-                        'Old: ${currencyFormat.format(sim.oldAp)} → New: ${currencyFormat.format(sim.newAp)}',
-                      ),
-                      subtitle: Text(
-                        'Buy ${sim.qtyToBuy.toStringAsFixed(2)} for ${currencyFormat.format(sim.cost)}',
-                      ),
-                      trailing: Text(
-                        '${sim.timestamp.hour.toString().padLeft(2, '0')}:${sim.timestamp.minute.toString().padLeft(2, '0')}',
+                    leading: CircleAvatar(
+                      backgroundColor:
+                      wasImprovement ? Colors.green.shade100 : Colors.red.shade100,
+                      child: Icon(
+                        wasImprovement ? Icons.trending_down : Icons.block,
+                        color: wasImprovement ? Colors.green.shade700 : Colors.red.shade700,
                       ),
                     ),
+                    title: Text(
+                      'Old: ${currencyFormat.format(sim.oldAp)} → New: ${currencyFormat.format(sim.newAp)}',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Row(
+                        children: [
+                          // Qty + Cost
+                          Text(
+                            'Buy ${sim.qtyToBuy.toStringAsFixed(2)} '
+                                'for ${currencyFormat.format(sim.cost)}',
+                          ),
+                          const SizedBox(width: 12),
+                          // Time chip
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              _formatWhen(sim.timestamp),
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    trailing: Icon(
+                      wasImprovement ? Icons.check_circle : Icons.error_outline,
+                      color: wasImprovement ? Colors.green.shade600 : Colors.red.shade700,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    ),
+
                   );
                 },
               ),
-            ),
+            )
+
           ],
         ),
       ),
