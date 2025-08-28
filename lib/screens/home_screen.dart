@@ -240,45 +240,54 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
     double q2 = ((targetAvg - avgPrice) * tokenQty) / (tokenPrice - targetAvg);
     double newQty = tokenQty + q2;
     double newAvg = ((avgPrice * tokenQty) + (tokenPrice * q2)) / newQty;
-    double cost = q2 * tokenPrice;
 
-    final simulationResult = SimulationResult(
-      oldAp: avgPrice,
-      newAp: newAvg,
-      qtyToBuy: q2,
-      cost: cost,
-      timestamp: DateTime.now(),
-    );
-
-    setState(() {
-      _history.insert(0, simulationResult);
-      while (_history.length > kMaxHistoryEntries) {
-        _history.removeLast();
-      }
-    });
-
-    await _saveHistory();
-
+    // Determine if the run improves the average price
     _lastRunAllowed = newAvg < avgPrice;
 
-    if (mounted && _lastRunAllowed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Simulation saved'),
-        ),
+    double cost = q2 * tokenPrice;
+
+    if (_lastRunAllowed) {
+      final simulationResult = SimulationResult(
+        oldAp: avgPrice,
+        newAp: newAvg,
+        qtyToBuy: q2,
+        cost: cost,
+        timestamp: DateTime.now(),
       );
+
+      setState(() {
+        _history.insert(0, simulationResult);
+        while (_history.length > kMaxHistoryEntries) {
+          _history.removeLast();
+        }
+      });
+
+      await _saveHistory();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Simulation saved'),
+          ),
+        );
+      }
     }
 
     if (!mounted) return;
     setState(() {
-      _resultText =
-      '✅ ACBA Buy Approved\n\n'
-          'Current AP: ${currencyFormat.format(avgPrice)}\n'
-          'Target AP: ${currencyFormat.format(targetAvg)}\n'
-          'New AP: ${currencyFormat.format(newAvg)}\n'
-          'Buy ${q2.toStringAsFixed(2)} tokens for ${currencyFormat.format(cost)}';
-      _resultColor =
-      _lastRunAllowed ? Colors.green.shade100 : Colors.red.shade100;
+      if (_lastRunAllowed) {
+        _resultText =
+        '✅ ACBA Buy Approved\n\n'
+            'Current AP: ${currencyFormat.format(avgPrice)}\n'
+            'Target AP: ${currencyFormat.format(targetAvg)}\n'
+            'New AP: ${currencyFormat.format(newAvg)}\n'
+            'Buy ${q2.toStringAsFixed(2)} tokens for ${currencyFormat.format(cost)}';
+        _resultColor = Colors.green.shade100;
+      } else {
+        _resultText =
+        '❌ Not allowed: Resulting average price must be lower than current average.';
+        _resultColor = Colors.red.shade100;
+      }
     });
   }
 
