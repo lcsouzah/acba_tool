@@ -482,6 +482,8 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
                       final removed = sim;
                       final removedIndex = index;
 
+                      final messenger = ScaffoldMessenger.of(context);
+
                       // Remove from list + persist
                       setState(() {
                         _history.removeAt(removedIndex);
@@ -491,7 +493,7 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
                       if (!mounted) return;
 
                       // Show snackbar with Undo
-                      ScaffoldMessenger.of(context)
+                      messenger
                         ..hideCurrentSnackBar()
                         ..showSnackBar(
                           SnackBar(
