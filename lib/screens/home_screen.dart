@@ -176,15 +176,36 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
   }
 
   void _calculate() async {
-    final double? avgPrice = double.tryParse(_avgPriceController.text.trim().replaceAll(',', '.'));
-    final double? tokenQty = double.tryParse(_tokenQtyController.text.trim().replaceAll(',', '.'));
-    final double? tokenPrice = double.tryParse(_tokenPriceController.text.trim().replaceAll(',', '.'));
-    final double? targetAvg = double.tryParse(_targetAvgController.text.trim().replaceAll(',', '.'));
+    final numberFormat = NumberFormat.decimalPattern();
+    double avgPrice;
+    double tokenQty;
+    double tokenPrice;
+    double targetAvg;
 
-    if (avgPrice == null || avgPrice <= 0 ||
-        tokenQty == null || tokenQty <= 0 ||
-        tokenPrice == null || tokenPrice <= 0 ||
-        targetAvg == null || targetAvg <= 0) {
+    try {
+      avgPrice =
+          numberFormat.parse(_avgPriceController.text.trim()).toDouble();
+      tokenQty =
+          numberFormat.parse(_tokenQtyController.text.trim()).toDouble();
+      tokenPrice =
+          numberFormat.parse(_tokenPriceController.text.trim()).toDouble();
+      targetAvg =
+          numberFormat.parse(_targetAvgController.text.trim()).toDouble();
+    } on FormatException {
+      setState(() {
+        _resultText = '❌ Invalid number format.';
+        _resultColor = Colors.red.shade100;
+        _lastRunAllowed = false;
+      });
+      return;
+    }
+
+    if (avgPrice <= 0 ||
+        tokenQty <= 0 ||
+        tokenPrice <= 0 ||
+        targetAvg <= 0) {
+
+
       setState(() {
         _resultText = '❌ Please enter numbers greater than zero.';
         _resultColor = Colors.red.shade100;
