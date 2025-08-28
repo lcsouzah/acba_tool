@@ -45,7 +45,7 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
   final _targetAvgController = TextEditingController();
 
   String? _resultText;
-  Color _resultColor = Colors.transparent;
+
 
   final currencyFormat = NumberFormat.simpleCurrency(decimalDigits: 2);
   //✅ Add History
@@ -125,7 +125,6 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
 
     setState(() {
       _resultText = null;
-      _resultColor = Colors.transparent;
       _lastRunAllowed = false;
     });
   }
@@ -194,7 +193,6 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
     } on FormatException {
       setState(() {
         _resultText = '❌ Invalid number format.';
-        _resultColor = Colors.red.shade100;
         _lastRunAllowed = false;
       });
       return;
@@ -208,7 +206,6 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
 
       setState(() {
         _resultText = '❌ Please enter numbers greater than zero.';
-        _resultColor = Colors.red.shade100;
         _lastRunAllowed = false;
       });
       return;
@@ -219,7 +216,6 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
       setState(() {
         _resultText =
         '❌ Not allowed: Target average must be lower than current average.';
-        _resultColor = Colors.red.shade100;
         _lastRunAllowed = false;
       });
       return;
@@ -230,7 +226,6 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
       setState(() {
         _resultText =
         '❌ Not allowed: Target average must be higher than current token price.';
-        _resultColor = Colors.red.shade100;
         _lastRunAllowed = false;
       });
       return;
@@ -282,8 +277,6 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
           'New AP: ${currencyFormat.format(newAvg)}\n'
           'Buy ${q2.toStringAsFixed(2)} tokens for ${currencyFormat.format(cost)}'
           : '❌ Buy not approved';
-      _resultColor =
-      _lastRunAllowed ? Colors.green.shade100 : Colors.red.shade100;
     });
   }
 
