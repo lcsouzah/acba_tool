@@ -126,7 +126,7 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
   void _loadHistory() async {
     final prefs = await SharedPreferences.getInstance();
     final historyData = prefs.getStringList('history') ?? [];
-
+    if (!mounted) return;
     setState(() {
       _history = historyData
           .map((entry) => SimulationResult.fromJson(jsonDecode(entry)))
@@ -137,6 +137,7 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
   void _clearHistory() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('history');
+    if (!mounted) return;
     setState(() {
       _history.clear();
     });
@@ -212,6 +213,7 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
       );
     }
 
+    if (!mounted) return;
     setState(() {
       _resultText =
       '✅ ACBA Buy Approved\n\n'
