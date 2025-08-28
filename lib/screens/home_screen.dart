@@ -133,12 +133,37 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
   void _loadHistory() async {
     final prefs = await SharedPreferences.getInstance();
     final historyData = prefs.getStringList('history') ?? [];
+
+    final parsed = <SimulationResult>[];
+    int discarded = 0;
+    for (final entry in historyData) {
+      try {
+        parsed.add(SimulationResult.fromJson(jsonDecode(entry)));
+      } catch (e) {
+        debugPrint('Failed to parse history entry: $e');
+        discarded++;
+      }
+    }
+
+    if (parsed.length > kMaxHistoryEntries) {
+      discarded += parsed.length - kMaxHistoryEntries;
+      parsed.removeRange(kMaxHistoryEntries, parsed.length);
+    }
+
     if (!mounted) return;
     setState(() {
-      _history = historyData
-          .map((entry) => SimulationResult.fromJson(jsonDecode(entry)))
-          .toList();
+      _history = parsed;
     });
+
+    if (discarded > 0 && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '$discarded history entr${discarded == 1 ? 'y' : 'ies'} discarded',
+          ),
+        ),
+      );
+    }
   }
 
   void _clearHistory() async {
