@@ -37,7 +37,7 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
   Color get _statusColor =>
       _lastRunAllowed ? Colors.green.shade600 : Colors.red.shade700;
   String get _statusText =>
-      _lastRunAllowed ? 'Allowed (AP will decrease)' : 'Not Allowed';
+      _lastRunAllowed ? 'Buy approved (AP will decrease)' : 'Buy not approved';
 
   final _avgPriceController = TextEditingController();
   final _tokenQtyController = TextEditingController();
@@ -275,19 +275,15 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
 
     if (!mounted) return;
     setState(() {
-      if (_lastRunAllowed) {
-        _resultText =
-        '✅ ACBA Buy Approved\n\n'
-            'Current AP: ${currencyFormat.format(avgPrice)}\n'
-            'Target AP: ${currencyFormat.format(targetAvg)}\n'
-            'New AP: ${currencyFormat.format(newAvg)}\n'
-            'Buy ${q2.toStringAsFixed(2)} tokens for ${currencyFormat.format(cost)}';
-        _resultColor = Colors.green.shade100;
-      } else {
-        _resultText =
-        '❌ Not allowed: Resulting average price must be lower than current average.';
-        _resultColor = Colors.red.shade100;
-      }
+      _resultText = _lastRunAllowed
+          ? '✅ ACBA Buy Approved\n\n'
+          'Current AP: ${currencyFormat.format(avgPrice)}\n'
+          'Target AP: ${currencyFormat.format(targetAvg)}\n'
+          'New AP: ${currencyFormat.format(newAvg)}\n'
+          'Buy ${q2.toStringAsFixed(2)} tokens for ${currencyFormat.format(cost)}'
+          : '❌ Buy not approved';
+      _resultColor =
+      _lastRunAllowed ? Colors.green.shade100 : Colors.red.shade100;
     });
   }
 
