@@ -88,11 +88,19 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
     await file.writeAsString(buffer.toString());
 
     // Share
-    await Share.shareXFiles(
-      [XFile(file.path)],
-      text: 'ACBA Tool – Simulation History (CSV)',
-      subject: 'ACBA Simulation History',
-    );
+    try {
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: 'ACBA Tool – Simulation History (CSV)',
+        subject: 'ACBA Simulation History',
+      );
+    } finally {
+      try {
+        await file.delete();
+      } catch (e) {
+        debugPrint('Failed to delete export file: $e');
+      }
+    }
   }
 
 
@@ -140,9 +148,12 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
     final double? tokenPrice = double.tryParse(_tokenPriceController.text.trim().replaceAll(',', '.'));
     final double? targetAvg = double.tryParse(_targetAvgController.text.trim().replaceAll(',', '.'));
 
-    if (avgPrice == null || tokenQty == null || tokenPrice == null || targetAvg == null || tokenQty == 0) {
+    if (avgPrice == null || avgPrice <= 0 ||
+        tokenQty == null || tokenQty <= 0 ||
+        tokenPrice == null || tokenPrice <= 0 ||
+        targetAvg == null || targetAvg <= 0) {
       setState(() {
-        _resultText = '❌ Please enter valid numbers.';
+        _resultText = '❌ Please enter numbers greater than zero.';
         _resultColor = Colors.red.shade100;
         _lastRunAllowed = false;
       });
