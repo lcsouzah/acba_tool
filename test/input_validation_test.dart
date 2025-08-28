@@ -12,10 +12,10 @@ Future<void> _pumpApp(
     }) async {
   await tester.pumpWidget(const MaterialApp(home: AcbaHomeScreen()));
   await tester.pump();
-  await tester.enterText(find.bySemanticsLabel('Current Average Price'), avgPrice);
-  await tester.enterText(find.bySemanticsLabel('Token Quantity'), tokenQty);
-  await tester.enterText(find.bySemanticsLabel('Token Price'), tokenPrice);
-  await tester.enterText(find.bySemanticsLabel('Target Average'), targetAvg);
+  await tester.enterText(find.byType(TextField).at(0), avgPrice);
+  await tester.enterText(find.byType(TextField).at(1), tokenQty);
+  await tester.enterText(find.byType(TextField).at(2), tokenPrice);
+  await tester.enterText(find.byType(TextField).at(3), targetAvg);
 }
 
 void main() {
