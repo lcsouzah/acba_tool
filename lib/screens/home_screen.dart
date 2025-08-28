@@ -24,11 +24,13 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
     return DateFormat('MMM d · HH:mm').format(t);
   }
 
-  bool get _isAllowed => _resultColor == Colors.green.shade100;
+  bool _lastRunAllowed = false;
 
-  IconData get _statusIcon => _isAllowed ? Icons.check_circle : Icons.error;
-  Color get _statusColor => _isAllowed ? Colors.green.shade600 : Colors.red.shade700;
-  String get _statusText => _isAllowed ? 'Allowed (AP will decrease)' : 'Not Allowed';
+  IconData get _statusIcon => _lastRunAllowed ? Icons.check_circle : Icons.error;
+  Color get _statusColor =>
+      _lastRunAllowed ? Colors.green.shade600 : Colors.red.shade700;
+  String get _statusText =>
+      _lastRunAllowed ? 'Allowed (AP will decrease)' : 'Not Allowed';
 
   final _avgPriceController = TextEditingController();
   final _tokenQtyController = TextEditingController();
@@ -109,6 +111,7 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
     setState(() {
       _resultText = null;
       _resultColor = Colors.transparent;
+      _lastRunAllowed = false;
     });
   }
 
@@ -141,6 +144,7 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
       setState(() {
         _resultText = '❌ Please enter valid numbers.';
         _resultColor = Colors.red.shade100;
+        _lastRunAllowed = false;
       });
       return;
     }
@@ -148,8 +152,10 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
     // 🧠 ACBA Rule: Only allow if you're lowering average price
     if (targetAvg >= avgPrice) {
       setState(() {
-        _resultText = '❌ Not allowed: Target average must be lower than current average.';
+        _resultText =
+        '❌ Not allowed: Target average must be lower than current average.';
         _resultColor = Colors.red.shade100;
+        _lastRunAllowed = false;
       });
       return;
     }
@@ -157,8 +163,10 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
     // 🧠 Also block if trying to lower average to or below current price
     if (targetAvg <= tokenPrice) {
       setState(() {
-        _resultText = '❌ Not allowed: Target average must be higher than current token price.';
+        _resultText =
+        '❌ Not allowed: Target average must be higher than current token price.';
         _resultColor = Colors.red.shade100;
+        _lastRunAllowed = false;
       });
       return;
     }
@@ -181,9 +189,11 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
       _history.insert(0, simulationResult);
     });
 
-  await _saveHistory();
+    await _saveHistory();
 
-    if (mounted && _isAllowed){
+    _lastRunAllowed = newAvg < avgPrice;
+
+    if (mounted && _lastRunAllowed) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Simulation saved'),
@@ -198,7 +208,8 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
           'Target AP: ${currencyFormat.format(targetAvg)}\n'
           'New AP: ${currencyFormat.format(newAvg)}\n'
           'Buy ${q2.toStringAsFixed(2)} tokens for ${currencyFormat.format(cost)}';
-      _resultColor = Colors.green.shade100;
+      _resultColor =
+      _lastRunAllowed ? Colors.green.shade100 : Colors.red.shade100;
     });
   }
 
@@ -313,7 +324,7 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
-                        color: _isAllowed ? Colors.green.shade50 : Colors.red.shade50,
+                        color: _lastRunAllowed ? Colors.green.shade50 : Colors.red.shade50,
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                       ),
                       child: Row(
