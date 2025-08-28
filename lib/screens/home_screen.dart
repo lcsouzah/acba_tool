@@ -8,6 +8,13 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 
+const int kMaxHistoryEntries = 100;
+
+
+
+
+
+
 class AcbaHomeScreen extends StatefulWidget {
 
   const AcbaHomeScreen({super.key});
@@ -199,6 +206,9 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
 
     setState(() {
       _history.insert(0, simulationResult);
+      while (_history.length > kMaxHistoryEntries) {
+        _history.removeLast();
+      }
     });
 
     await _saveHistory();
