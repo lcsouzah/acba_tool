@@ -45,6 +45,9 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
   final _tokenPriceController = TextEditingController();
   final _targetAvgController = TextEditingController();
 
+  late final FlutterSecureStorage _storage;
+  static const _historyKey = 'acba_history';
+
   String? _resultText;
 
 
