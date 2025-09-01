@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 
+
 const int kMaxHistoryEntries = 100;
 
 
@@ -99,13 +100,17 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
     final file = File('${dir.path}/acba_history.csv');
     await file.writeAsString(buffer.toString());
 
-    // Share
+    // Export the file
     try {
       await SharePlus.instance.share(
-        files: [XFile(file.path)],
-        text: 'ACBA Tool – Simulation History (CSV)',
-        subject: 'ACBA Simulation History',
+        ShareData(
+          files: [XFile(file.path)],
+          text: 'ACBA Tool – Simulation History (CSV)',
+          subject: 'ACBA Simulation History',
+        ),
       );
+
+
     } finally {
       try {
         await file.delete();
