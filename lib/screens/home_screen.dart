@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/simulation_result.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -16,8 +16,9 @@ const int kMaxHistoryEntries = 100;
 
 
 class AcbaHomeScreen extends StatefulWidget {
+  final FlutterSecureStorage? storage;
 
-  const AcbaHomeScreen({super.key});
+  const AcbaHomeScreen({super.key, this.storage});
 
 
   @override
@@ -55,6 +56,7 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
   @override
   void initState() {
     super.initState();
+    _storage = widget.storage ?? const FlutterSecureStorage();
     _loadHistory();
   }
   @override
@@ -112,9 +114,8 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
 
 
   Future<void> _saveHistory() async {
-    final prefs = await SharedPreferences.getInstance();
     final saved = _history.map((e) => jsonEncode(e.toJson())).toList();
-    await prefs.setStringList('history', saved);
+    await _storage.write(key: _historyKey, value: jsonEncode(saved));
   }
 
   void _resetInputs(){
@@ -130,9 +131,11 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
   }
 
   void _loadHistory() async {
-    final prefs = await SharedPreferences.getInstance();
-    if(!mounted) return;
-    final historyData = prefs.getStringList('history') ?? [];
+    if (!mounted) return;
+    final data = await _storage.read(key: _historyKey);
+    final historyData = data == null
+        ? <String>[]
+        : (jsonDecode(data) as List<dynamic>).cast<String>();
 
     final parsed = <SimulationResult>[];
     int discarded = 0;
@@ -167,9 +170,8 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
   }
 
   void _clearHistory() async {
-    final prefs = await SharedPreferences.getInstance();
-    if(!mounted) return;
-    await prefs.remove('history');
+    if (!mounted) return;
+    await _storage.delete(key: _historyKey);
     if (!mounted) return;
     setState(() {
       _history.clear();

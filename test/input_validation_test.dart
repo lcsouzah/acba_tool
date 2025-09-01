@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:acba_tool/screens/home_screen.dart';
+import 'test_utils.dart';
 
 Future<void> _pumpApp(
     WidgetTester tester, {
@@ -9,8 +9,9 @@ Future<void> _pumpApp(
       String tokenQty = '10',
       String tokenPrice = '90',
       String targetAvg = '95',
+      required InMemorySecureStorage storage,
     }) async {
-  await tester.pumpWidget(const MaterialApp(home: AcbaHomeScreen()));
+  await tester.pumpWidget(MaterialApp(home: AcbaHomeScreen(storage: storage)));
   await tester.pump();
   await tester.enterText(find.byType(TextField).at(0), avgPrice);
   await tester.enterText(find.byType(TextField).at(1), tokenQty);
@@ -19,20 +20,18 @@ Future<void> _pumpApp(
 }
 
 void main() {
-  setUp(() {
-    SharedPreferences.setMockInitialValues({});
-  });
-
   group('input validation', () {
     testWidgets('shows error when any value is zero', (tester) async {
-      await _pumpApp(tester, tokenQty: '0');
+      final storage = InMemorySecureStorage();
+      await _pumpApp(tester, tokenQty: '0', storage: storage);
       await tester.tap(find.widgetWithText(ElevatedButton, 'Calculate'));
       await tester.pump();
       expect(find.text('❌ Please enter numbers greater than zero.'), findsOneWidget);
     });
 
     testWidgets('shows error when any value is negative', (tester) async {
-      await _pumpApp(tester, tokenQty: '-5');
+      final storage = InMemorySecureStorage();
+      await _pumpApp(tester, tokenQty: '-5', storage: storage);
       await tester.tap(find.widgetWithText(ElevatedButton, 'Calculate'));
       await tester.pump();
       expect(find.text('❌ Please enter numbers greater than zero.'), findsOneWidget);
