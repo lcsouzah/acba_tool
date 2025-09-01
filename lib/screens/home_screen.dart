@@ -456,7 +456,7 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
               )
                   : ListView.separated(
                 itemCount: _history.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
+                separatorBuilder: (_, index) => const Divider(height: 1),
                 itemBuilder: (context, index) {
                   final sim = _history[index];
                   final wasImprovement = sim.newAp < sim.oldAp;
