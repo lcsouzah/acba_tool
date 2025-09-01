@@ -8,13 +8,13 @@ class InMemorySecureStorage extends FlutterSecureStorage {
   @override
   Future<void> write({
     required String key,
-    String? value,
+    required String? value,
     IOSOptions? iOptions,
     AndroidOptions? aOptions,
     LinuxOptions? lOptions,
-    WebOptions? wOptions,
+    WebOptions? webOptions,
     MacOsOptions? mOptions,
-    WindowsOptions? windowsOptions,
+    WindowsOptions? wOptions,
   }) async {
     if (value == null) {
       _store.remove(key);
@@ -29,9 +29,9 @@ class InMemorySecureStorage extends FlutterSecureStorage {
     IOSOptions? iOptions,
     AndroidOptions? aOptions,
     LinuxOptions? lOptions,
-    WebOptions? wOptions,
+    WebOptions? webOptions,
     MacOsOptions? mOptions,
-    WindowsOptions? windowsOptions,
+    WindowsOptions? wOptions,
   }) async {
     return _store[key];
   }
@@ -42,9 +42,9 @@ class InMemorySecureStorage extends FlutterSecureStorage {
     IOSOptions? iOptions,
     AndroidOptions? aOptions,
     LinuxOptions? lOptions,
-    WebOptions? wOptions,
+    WebOptions? webOptions,
     MacOsOptions? mOptions,
-    WindowsOptions? windowsOptions,
+    WindowsOptions? wOptions,
   }) async {
     _store.remove(key);
   }
