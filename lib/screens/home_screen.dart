@@ -102,8 +102,8 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
 
     // Export the file
     try {
-      await SharePlus.instance.share(
-        ShareData(
+      await Share.shareXFiles(
+        ShareParams(
           files: [XFile(file.path)],
           text: 'ACBA Tool – Simulation History (CSV)',
           subject: 'ACBA Simulation History',
