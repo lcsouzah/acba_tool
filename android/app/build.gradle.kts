@@ -29,12 +29,28 @@ android {
         versionName = flutter.versionName
     }
 
+    val keystorePath: String? = project.findProperty("KEYSTORE_PATH") as String?
+        ?: System.getenv("KEYSTORE_PATH")
+    val keystorePassword: String? = project.findProperty("KEYSTORE_PASSWORD") as String?
+        ?: System.getenv("KEYSTORE_PASSWORD")
+    val keyAliasProp: String? = project.findProperty("KEY_ALIAS") as String?
+        ?: System.getenv("KEY_ALIAS")
+    val keyPasswordProp: String? = project.findProperty("KEY_PASSWORD") as String?
+        ?: System.getenv("KEY_PASSWORD")
+
     signingConfigs {
         create("release") {
-            storeFile = file("keystore/release.jks")
-            storePassword = "storePassword"
-            keyAlias = "release"
-            keyPassword = "keyPassword"
+            if (
+                keystorePath != null &&
+                keystorePassword != null &&
+                keyAliasProp != null &&
+                keyPasswordProp != null
+            ) {
+                storeFile = file(keystorePath)
+                storePassword = keystorePassword
+                keyAlias = keyAliasProp
+                keyPassword = keyPasswordProp
+            }
         }
     }
 
