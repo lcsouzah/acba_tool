@@ -131,6 +131,7 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
 
   void _loadHistory() async {
     final prefs = await SharedPreferences.getInstance();
+    if(!mounted) return;
     final historyData = prefs.getStringList('history') ?? [];
 
     final parsed = <SimulationResult>[];
@@ -167,6 +168,7 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
 
   void _clearHistory() async {
     final prefs = await SharedPreferences.getInstance();
+    if(!mounted) return;
     await prefs.remove('history');
     if (!mounted) return;
     setState(() {
@@ -258,14 +260,12 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
       });
 
       await _saveHistory();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Simulation saved'),
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Simulation saved'),
+        ),
+      );
     }
 
     if (!mounted) return;
