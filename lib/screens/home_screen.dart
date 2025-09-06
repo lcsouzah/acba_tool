@@ -6,7 +6,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-
+import './transactions_screen.dart';
 
 
 const int kMaxHistoryEntries = 100;
@@ -302,6 +302,16 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
           tooltip: 'Export CSV',
           icon: const Icon(Icons.ios_share),
           onPressed: _exportCsv,
+          ),
+          IconButton(
+            tooltip: 'Transactions',
+            icon: const Icon(Icons.list_alt),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const TransactionsScreen()),
+              );
+            },
           ),
         ],
       ),
