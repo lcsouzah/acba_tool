@@ -2,6 +2,18 @@
 
 ACBA Tool is a mobile app that helps users simulate and validate disciplined crypto accumulation using the Adaptive Cost Basis Accumulation protocol.
 
+## Quickstart
+
+- Install [Flutter](https://flutter.dev) (compatible with Dart SDK ^3.8.1) and get dependencies:
+
+  ```bash
+  flutter pub get
+  ```
+
+- Copy `.env.example` to `.env` and supply your Supabase project URL and API key.
+- Run unit tests with `flutter test`.
+- Launch the app with `flutter run`.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.
