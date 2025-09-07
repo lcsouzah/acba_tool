@@ -41,6 +41,42 @@ class _Stats {
   const _Stats(this.qty, this.avg, this.unrealized);
 }
 
+_Stats computeStats(List<TransactionModel> tx, {double? marketPrice}) {
+  double qty = 0.0;
+  double cost = 0.0; // running cost basis (includes fees)
+
+  // Process from oldest to newest so cost/qty evolve correctly
+  final reversed = tx.reversed.toList();
+  for (final t in reversed) {
+    switch (t.type) {
+      case TxType.buy:
+        cost += t.quantity * t.price + t.fee;
+        qty += t.quantity;
+        break;
+      case TxType.sell:
+      // reduce quantity; keep avg cost basis for remaining
+        final sellQty = t.quantity.clamp(0, qty);
+        final avg = qty == 0 ? 0.0 : cost / qty;
+        qty -= sellQty;
+        cost -= avg * sellQty; // remove proportional cost basis
+        break;
+      case TxType.fee:
+        cost += t.fee; // fees increase cost basis
+        break;
+      case TxType.note:
+      // no-op
+        break;
+    }
+  }
+
+  final avg = qty == 0 ? 0.0 : cost / qty;
+  double? unrealized;
+  if (marketPrice != null && qty > 0) {
+    unrealized = (marketPrice - avg) * qty;
+  }
+  return _Stats(qty, avg, unrealized);
+}
+
 // ----- Screen: add/list/delete with Undo (in-memory) + Stats header + ACBA validator -----
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -91,7 +127,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   String? _validateBuy(TransactionModel buy) {
-    final stats = _computeStats();
+    final stats = computeStats(_tx, marketPrice: _marketPrice);
 
     // Rule 1: first buy always allowed
     if (stats.qty == 0) return null;
@@ -145,41 +181,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     return sum;
   }
 
-  _Stats _computeStats() {
-    double qty = 0.0;
-    double cost = 0.0; // running cost basis (includes fees)
-
-    // Process from oldest to newest so cost/qty evolve correctly
-    final reversed = _tx.reversed.toList();
-    for (final t in reversed) {
-      switch (t.type) {
-        case TxType.buy:
-          cost += t.quantity * t.price + t.fee;
-          qty += t.quantity;
-          break;
-        case TxType.sell:
-        // reduce quantity; keep avg cost basis for remaining
-          final sellQty = t.quantity.clamp(0, qty);
-          final avg = qty == 0 ? 0.0 : cost / qty;
-          qty -= sellQty;
-          cost -= avg * sellQty; // remove proportional cost basis
-          break;
-        case TxType.fee:
-          cost += t.fee; // fees increase cost basis
-          break;
-        case TxType.note:
-        // no-op
-          break;
-      }
-    }
-
-    final avg = qty == 0 ? 0.0 : cost / qty;
-    double? unrealized;
-    if (_marketPrice != null && qty > 0) {
-      unrealized = (_marketPrice! - avg) * qty;
-    }
-    return _Stats(qty, avg, unrealized);
-  }
+  // Stats are now computed via the top-level [computeStats] helper.
 
   void _openRules() async {
     final updated = await showModalBottomSheet<AcbaRules>(
@@ -210,7 +212,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final stats = _computeStats();
+    final stats = computeStats(_tx, marketPrice: _marketPrice);
 
     return Scaffold(
       appBar: AppBar(
