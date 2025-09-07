@@ -47,3 +47,4 @@ app.*.map.json
 # Android signing keys and secrets
 android/app/keystore/
 android/keystore.properties
+.env
