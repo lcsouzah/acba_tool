@@ -14,6 +14,12 @@ ACBA Tool is a mobile app that helps users simulate and validate disciplined cry
 - Run unit tests with `flutter test`.
 - Launch the app with `flutter run`.
 
+## Known Issues
+
+- In the current container environment the `flutter` command is unavailable, so `flutter test` and `flutter run` cannot execute. 
+- This prevented verifying navigation from Home to Transactions. 
+- Ensure the Flutter SDK is installed and a device or emulator is connected before launching the app.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.
