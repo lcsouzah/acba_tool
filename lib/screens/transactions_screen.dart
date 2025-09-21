@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 // ----- Minimal model (local-only) -----
 enum TxType { buy, sell, fee, note }
@@ -458,7 +459,7 @@ class _AddTransactionSheetState extends State<_AddTransactionSheet> {
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       validator: (v) {
         if (!isRequired && (v == null || v.trim().isEmpty)) return null;
-        final parsed = double.tryParse(v ?? '');
+        final parsed = _parseLocalizedNumber(v);
         if (parsed == null) return 'Enter a number';
         if (parsed < 0) return 'Must be ≥ 0';
         return null;
@@ -468,9 +469,9 @@ class _AddTransactionSheetState extends State<_AddTransactionSheet> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    final qty = double.tryParse(_qtyCtrl.text) ?? 0;
-    final price = double.tryParse(_priceCtrl.text) ?? 0;
-    final fee = double.tryParse(_feeCtrl.text) ?? 0;
+    final qty = _parseLocalizedNumber(_qtyCtrl.text) ?? 0;
+    final price = _parseLocalizedNumber(_priceCtrl.text) ?? 0;
+    final fee = _parseLocalizedNumber(_feeCtrl.text) ?? 0;
     final now = DateTime.now();
     final tx = TransactionModel(
       id: '${now.microsecondsSinceEpoch}',
@@ -538,10 +539,11 @@ class _RulesSheetState extends State<_RulesSheet> {
                 const SizedBox(width: 4),
                 FilledButton(
                   onPressed: () {
-                    final t = double.tryParse(_thresholdCtrl.text);
+                    final t = _parseLocalizedNumber(_thresholdCtrl.text);
                     final c = int.tryParse(_cooldownCtrl.text);
-                    final d = double.tryParse(_dailyCtrl.text);
+                    final d = _parseLocalizedNumber(_dailyCtrl.text);
                     if (t == null || t <= 0 || c == null || c < 0 || d == null || d < 0) {
+
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Please enter valid rule values')),
                       );
@@ -589,3 +591,15 @@ class _RulesSheetState extends State<_RulesSheet> {
   }
 }
 
+double? _parseLocalizedNumber(String? input) {
+  if (input == null) return null;
+  final trimmed = input.trim();
+  if (trimmed.isEmpty) return null;
+  final format = NumberFormat.decimalPattern();
+  try {
+    final parsed = format.parse(trimmed);
+    return parsed.toDouble();
+  } on FormatException {
+    return null;
+  }
+}
