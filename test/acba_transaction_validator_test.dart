@@ -81,7 +81,10 @@ class _TestValidator {
     if (qty == 0) return null;
 
     final thresholdPrice = avg * rules.buyThreshold;
-    if (buy.price > thresholdPrice) return 'Price too high';
+    if (buy.price > thresholdPrice) {
+      return 'Price too high for discipline.\n\nCurrent Avg: \$${avg.toStringAsFixed(2)}'
+          '\nThreshold: ${((1 - rules.buyThreshold) * 100).toStringAsFixed(2)}% below avg\nMax allowed price now: \$${thresholdPrice.toStringAsFixed(2)}\nYour price: \$${buy.price.toStringAsFixed(2)}';
+    }
 
     final lastBuy = tx.firstWhere((t) => t.type == TxType.buy, orElse: () => buy);
     final days = buy.ts.difference(lastBuy.ts).inDays;

@@ -136,7 +136,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     final avg = stats.avg;
     final thresholdPrice = avg * _rules.buyThreshold;
     if (buy.price > thresholdPrice) {
-      return 'Price too high for discipline.\n\nCurrent Avg: \$${avg.toStringAsFixed(2)}\nThreshold: ${((_rules.buyThreshold - 1) * 100).toStringAsFixed(2)}% below avg\nMax allowed price now: \$${thresholdPrice.toStringAsFixed(2)}\nYour price: \$${buy.price.toStringAsFixed(2)}';
+      return 'Price too high for discipline.\n\nCurrent Avg: \$${avg.toStringAsFixed(2)}\nThreshold: ${(( 1- _rules.buyThreshold ) * 100).toStringAsFixed(2)}% below avg\nMax allowed price now: \$${thresholdPrice.toStringAsFixed(2)}\nYour price: \$${buy.price.toStringAsFixed(2)}';
     }
 
     // Rule 2: cooldown between BUYs
