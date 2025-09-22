@@ -142,13 +142,18 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     // Rule 2: cooldown between BUYs
     final lastBuy = _lastBuyAt();
     if (lastBuy != null) {
-      final days = DateTime.now().difference(lastBuy).inDays;
-      if (days < _rules.cooldownDays) {
-        final nextDate = lastBuy.add(Duration(days: _rules.cooldownDays));
+      final nextDate = lastBuy.add(Duration(days: _rules.cooldownDays));
+      final now = DateTime.now();
+      if (now.isBefore(nextDate)) {
+        final remainingDuration = nextDate.difference(now);
+        final remainingSeconds = remainingDuration.inSeconds;
+        final remainingHours = (remainingSeconds / 3600).ceil();
+        final remainingDays = (remainingHours / 24).ceil();
         final y = nextDate.year;
         final m = nextDate.month.toString().padLeft(2, '0');
         final d = nextDate.day.toString().padLeft(2, '0');
-        return 'Cooldown active. Next eligible buy: $y-$m-$d (in ${_rules.cooldownDays - days} day(s)).';
+        final hourDetail = remainingHours < 24 ? ' (~$remainingHours hour(s))' : '';
+        return 'Cooldown active. Next eligible buy: $y-$m-$d (in $remainingDays day(s)$hourDetail).';
       }
     }
 

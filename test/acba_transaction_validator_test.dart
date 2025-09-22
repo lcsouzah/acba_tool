@@ -39,6 +39,22 @@ void main() {
       expect(result, contains('Cooldown active'));
     });
 
+    test('cooldown message reports remaining window precisely', () {
+      final now = DateTime(2024, 1, 10, 12);
+      final lastBuy = now.subtract(const Duration(hours: 47));
+      final existing = [
+        TransactionModel(id: '1', type: TxType.buy, quantity: 10, price: 90, ts: lastBuy)
+      ];
+      final tx = TransactionModel(id: '2', type: TxType.buy, quantity: 5, price: 80, ts: now);
+      final validator = _TestValidator(existing, rules);
+      final result = validator.validateBuy(tx);
+      final nextDate = lastBuy.add(Duration(days: rules.cooldownDays));
+      final y = nextDate.year;
+      final m = nextDate.month.toString().padLeft(2, '0');
+      final d = nextDate.day.toString().padLeft(2, '0');
+      expect(result, 'Cooldown active. Next eligible buy: $y-$m-$d (in 2 day(s)).');
+    });
+
     test('blocks buy when daily spend exceeded', () {
       final now = DateTime.now();
       final existing = [
@@ -87,8 +103,18 @@ class _TestValidator {
     }
 
     final lastBuy = tx.firstWhere((t) => t.type == TxType.buy, orElse: () => buy);
-    final days = buy.ts.difference(lastBuy.ts).inDays;
-    if (days < rules.cooldownDays) return 'Cooldown active';
+    final nextDate = lastBuy.ts.add(Duration(days: rules.cooldownDays));
+    if (buy.ts.isBefore(nextDate)) {
+      final remainingDuration = nextDate.difference(buy.ts);
+      final remainingSeconds = remainingDuration.inSeconds;
+      final remainingHours = (remainingSeconds / 3600).ceil();
+      final remainingDays = (remainingHours / 24).ceil();
+      final y = nextDate.year;
+      final m = nextDate.month.toString().padLeft(2, '0');
+      final d = nextDate.day.toString().padLeft(2, '0');
+      final hourDetail = remainingHours < 24 ? ' (~$remainingHours hour(s))' : '';
+      return 'Cooldown active. Next eligible buy: $y-$m-$d (in $remainingDays day(s)$hourDetail).';
+    }
 
     final todaySpend = tx.where((t) =>
     t.type == TxType.buy &&
