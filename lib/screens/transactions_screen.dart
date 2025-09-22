@@ -267,8 +267,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                               border: OutlineInputBorder(),
                             ),
                             onSubmitted: (v) {
-                              final p = double.tryParse(v);
-                              setState(() => _marketPrice = p);
+                              final parsed = _parseLocalizedNumber(v);
+                              setState(() => _marketPrice = parsed);
                             },
                           ),
                         ),
