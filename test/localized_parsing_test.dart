@@ -68,6 +68,12 @@ void main() {
       await tester.tap(find.widgetWithText(ElevatedButton, 'Calculate'));
       await tester.pumpAndSettle();
       expect(find.textContaining('✅ ACBA Buy Approved'), findsOneWidget);
+      final qtyFormat = NumberFormat.decimalPattern()
+        ..minimumFractionDigits = 2
+        ..maximumFractionDigits = 2;
+      final expectedFragment =
+          'Buy ${qtyFormat.format(((4.5 - 5) * 1000) / (3 - 4.5))} tokens';
+      expect(find.textContaining(expectedFragment), findsOneWidget);
     });
   });
 

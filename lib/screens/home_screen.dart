@@ -53,6 +53,8 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
 
 
   final currencyFormat = NumberFormat.simpleCurrency(decimalDigits: 2);
+  late final NumberFormat _decimalParser;
+  late final NumberFormat _quantityFormat;
   //✅ Add History
   List<SimulationResult> _history = [];
 
@@ -61,8 +63,13 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
   void initState() {
     super.initState();
     _storage = widget.storage ?? const FlutterSecureStorage();
+    _decimalParser = NumberFormat.decimalPattern();
+    _quantityFormat = NumberFormat.decimalPattern()
+      ..minimumFractionDigits = 2
+      ..maximumFractionDigits = 2;
     _loadHistory();
   }
+
   @override
   void dispose() {
     _avgPriceController.dispose();
@@ -187,7 +194,6 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
   }
 
   void _calculate() async {
-    final numberFormat = NumberFormat.decimalPattern();
     double avgPrice;
     double tokenQty;
     double tokenPrice;
@@ -195,13 +201,13 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
 
     try {
       avgPrice =
-          numberFormat.parse(_avgPriceController.text.trim()).toDouble();
+          _decimalParser.parse(_avgPriceController.text.trim()).toDouble();
       tokenQty =
-          numberFormat.parse(_tokenQtyController.text.trim()).toDouble();
+          _decimalParser.parse(_tokenQtyController.text.trim()).toDouble();
       tokenPrice =
-          numberFormat.parse(_tokenPriceController.text.trim()).toDouble();
+          _decimalParser.parse(_tokenPriceController.text.trim()).toDouble();
       targetAvg =
-          numberFormat.parse(_targetAvgController.text.trim()).toDouble();
+          _decimalParser.parse(_targetAvgController.text.trim()).toDouble();
     } on FormatException {
       setState(() {
         _resultText = '❌ Invalid number format.';
@@ -285,7 +291,7 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
           'Current AP: ${currencyFormat.format(avgPrice)}\n'
           'Target AP: ${currencyFormat.format(targetAvg)}\n'
           'New AP: ${currencyFormat.format(newAvg)}\n'
-          'Buy ${q2.toStringAsFixed(2)} tokens for ${currencyFormat.format(cost)}'
+          'Buy ${_quantityFormat.format(q2)} tokens for ${currencyFormat.format(cost)}'
           : '❌ Buy not approved';
     });
   }
@@ -543,7 +549,7 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
                         children: [
                           // Qty + Cost
                           Text(
-                            'Buy ${sim.qtyToBuy.toStringAsFixed(2)} '
+                            'Buy ${_quantityFormat.format(sim.qtyToBuy)} tokens '
                                 'for ${currencyFormat.format(sim.cost)}',
                           ),
                           const SizedBox(width: 12),
