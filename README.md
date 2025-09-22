@@ -11,6 +11,7 @@ ACBA Tool is a mobile app that helps users simulate and validate disciplined cry
   ```
 
 - Copy `.env.example` to `.env` and supply your Supabase project URL and API key.
+  - `flutter run` will fail before start-up if `.env` is missing, so be sure to create the file first.
 - Run unit tests with `flutter test`.
 - Launch the app with `flutter run`.
 
