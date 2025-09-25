@@ -236,7 +236,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           final result = await showModalBottomSheet<TransactionModel>(
             context: context,
             isScrollControlled: true,
-            builder: (_) => const _AddTransactionSheet(),
+            builder: (_) => _AddTransactionSheet(
+              validator: (tx) => tx.type == TxType.buy ? _validateBuy(tx) : null,
+            ),
           );
           if (result != null) _addTx(result);
         },
@@ -377,7 +379,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
 // ----- Bottom sheet: Add Transaction -----
 class _AddTransactionSheet extends StatefulWidget {
-  const _AddTransactionSheet();
+  final String? Function(TransactionModel)? validator;
+
+  const _AddTransactionSheet({this.validator});
   @override
   State<_AddTransactionSheet> createState() => _AddTransactionSheetState();
 }
@@ -389,6 +393,7 @@ class _AddTransactionSheetState extends State<_AddTransactionSheet> {
   final _priceCtrl = TextEditingController();
   final _feeCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
+  String? _error;
 
   @override
   void dispose() {
@@ -418,7 +423,10 @@ class _AddTransactionSheetState extends State<_AddTransactionSheet> {
                   const SizedBox(width: 12),
                   DropdownButton<TxType>(
                     value: _type,
-                    onChanged: (v) => setState(() => _type = v ?? TxType.buy),
+                    onChanged: (v) => setState(() {
+                      _type = v ?? TxType.buy;
+                      _error = null;
+                    }),
                     items: const [
                       DropdownMenuItem(value: TxType.buy, child: Text('Buy')),
                       DropdownMenuItem(value: TxType.sell, child: Text('Sell')),
@@ -438,6 +446,13 @@ class _AddTransactionSheetState extends State<_AddTransactionSheet> {
                 decoration: const InputDecoration(labelText: 'Note (optional)', border: OutlineInputBorder()),
                 maxLines: 2,
               ),
+              if (_error != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  _error!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ],
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -487,9 +502,21 @@ class _AddTransactionSheetState extends State<_AddTransactionSheet> {
       ts: now,
       note: _noteCtrl.text.isEmpty ? null : _noteCtrl.text,
     );
+    final validator = widget.validator;
+    if (validator != null) {
+      final message = validator(tx);
+      if (message != null) {
+        setState(() => _error = message);
+        return;
+      }
+    }
+    if (_error != null) {
+      setState(() => _error = null);
+    }
     Navigator.of(context).pop(tx);
   }
 }
+
 
 // ----- Bottom sheet: ACBA Rules -----
 class _RulesSheet extends StatefulWidget {

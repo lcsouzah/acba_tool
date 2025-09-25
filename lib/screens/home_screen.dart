@@ -545,14 +545,16 @@ class _AcbaHomeScreenState extends State<AcbaHomeScreen> {
                     ),
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 4),
-                      child: Row(
+                      child: Wrap(
+                        spacing: 12,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           // Qty + Cost
                           Text(
                             'Buy ${_quantityFormat.format(sim.qtyToBuy)} tokens '
                                 'for ${currencyFormat.format(sim.cost)}',
                           ),
-                          const SizedBox(width: 12),
                           // Time chip
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
